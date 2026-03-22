@@ -3,8 +3,8 @@ import { Posologie } from "../types";
 export const stubPosologies: Posologie[] = [
   // Amoxiclav — Chien
   {
-    id: "pos-001",
-    medicament_id: "med-001",
+    id: "b2c3d4e5-0001-4000-8000-000000000001",
+    medicament_id: "a1b2c3d4-0001-4000-8000-000000000001",
     espece: "chien",
     tranche_age: "adulte",
     dose_min: 12.5,
@@ -13,8 +13,8 @@ export const stubPosologies: Posologie[] = [
   },
   // Amoxiclav — Chat
   {
-    id: "pos-002",
-    medicament_id: "med-001",
+    id: "b2c3d4e5-0002-4000-8000-000000000002",
+    medicament_id: "a1b2c3d4-0001-4000-8000-000000000001",
     espece: "chat",
     tranche_age: "adulte",
     dose_min: 12.5,
@@ -24,8 +24,8 @@ export const stubPosologies: Posologie[] = [
 
   // Meloxidyl injectable — Chien
   {
-    id: "pos-003",
-    medicament_id: "med-002",
+    id: "b2c3d4e5-0003-4000-8000-000000000003",
+    medicament_id: "a1b2c3d4-0002-4000-8000-000000000002",
     espece: "chien",
     tranche_age: "adulte",
     dose_min: 0.2,
@@ -34,8 +34,8 @@ export const stubPosologies: Posologie[] = [
   },
   // Meloxidyl injectable — Chat
   {
-    id: "pos-004",
-    medicament_id: "med-002",
+    id: "b2c3d4e5-0004-4000-8000-000000000004",
+    medicament_id: "a1b2c3d4-0002-4000-8000-000000000002",
     espece: "chat",
     tranche_age: "adulte",
     dose_min: 0.2,
@@ -44,8 +44,8 @@ export const stubPosologies: Posologie[] = [
   },
   // Meloxidyl injectable — Lapin
   {
-    id: "pos-005",
-    medicament_id: "med-002",
+    id: "b2c3d4e5-0005-4000-8000-000000000005",
+    medicament_id: "a1b2c3d4-0002-4000-8000-000000000002",
     espece: "lapin",
     tranche_age: "adulte",
     dose_min: 0.2,
@@ -55,8 +55,8 @@ export const stubPosologies: Posologie[] = [
 
   // Convenia — Chien
   {
-    id: "pos-006",
-    medicament_id: "med-003",
+    id: "b2c3d4e5-0006-4000-8000-000000000006",
+    medicament_id: "a1b2c3d4-0003-4000-8000-000000000003",
     espece: "chien",
     tranche_age: "adulte",
     dose_min: 8,
@@ -65,8 +65,8 @@ export const stubPosologies: Posologie[] = [
   },
   // Convenia — Chat
   {
-    id: "pos-007",
-    medicament_id: "med-003",
+    id: "b2c3d4e5-0007-4000-8000-000000000007",
+    medicament_id: "a1b2c3d4-0003-4000-8000-000000000003",
     espece: "chat",
     tranche_age: "adulte",
     dose_min: 8,
@@ -76,8 +76,8 @@ export const stubPosologies: Posologie[] = [
 
   // Baytril — Chien
   {
-    id: "pos-008",
-    medicament_id: "med-004",
+    id: "b2c3d4e5-0008-4000-8000-000000000008",
+    medicament_id: "a1b2c3d4-0004-4000-8000-000000000004",
     espece: "chien",
     tranche_age: "adulte",
     dose_min: 5,
@@ -86,8 +86,8 @@ export const stubPosologies: Posologie[] = [
   },
   // Baytril — Chat
   {
-    id: "pos-009",
-    medicament_id: "med-004",
+    id: "b2c3d4e5-0009-4000-8000-000000000009",
+    medicament_id: "a1b2c3d4-0004-4000-8000-000000000004",
     espece: "chat",
     tranche_age: "adulte",
     dose_min: 5,
@@ -96,8 +96,8 @@ export const stubPosologies: Posologie[] = [
   },
   // Baytril — Lapin
   {
-    id: "pos-010",
-    medicament_id: "med-004",
+    id: "b2c3d4e5-0010-4000-8000-000000000010",
+    medicament_id: "a1b2c3d4-0004-4000-8000-000000000004",
     espece: "lapin",
     tranche_age: "adulte",
     dose_min: 5,
@@ -106,8 +106,8 @@ export const stubPosologies: Posologie[] = [
   },
   // Baytril — Furet
   {
-    id: "pos-011",
-    medicament_id: "med-004",
+    id: "b2c3d4e5-0011-4000-8000-000000000011",
+    medicament_id: "a1b2c3d4-0004-4000-8000-000000000004",
     espece: "furet",
     tranche_age: "adulte",
     dose_min: 5,
@@ -116,8 +116,8 @@ export const stubPosologies: Posologie[] = [
   },
   // Baytril — Rongeur
   {
-    id: "pos-012",
-    medicament_id: "med-004",
+    id: "b2c3d4e5-0012-4000-8000-000000000012",
+    medicament_id: "a1b2c3d4-0004-4000-8000-000000000004",
     espece: "rongeur",
     tranche_age: "adulte",
     dose_min: 5,
@@ -127,8 +127,8 @@ export const stubPosologies: Posologie[] = [
 
   // Dexdomitor — Chien
   {
-    id: "pos-013",
-    medicament_id: "med-005",
+    id: "b2c3d4e5-0013-4000-8000-000000000013",
+    medicament_id: "a1b2c3d4-0005-4000-8000-000000000005",
     espece: "chien",
     tranche_age: "adulte",
     dose_min: 0.01,
@@ -137,8 +137,8 @@ export const stubPosologies: Posologie[] = [
   },
   // Dexdomitor — Chat
   {
-    id: "pos-014",
-    medicament_id: "med-005",
+    id: "b2c3d4e5-0014-4000-8000-000000000014",
+    medicament_id: "a1b2c3d4-0005-4000-8000-000000000005",
     espece: "chat",
     tranche_age: "adulte",
     dose_min: 0.01,
@@ -148,8 +148,8 @@ export const stubPosologies: Posologie[] = [
 
   // Itrafungol — Chat uniquement
   {
-    id: "pos-015",
-    medicament_id: "med-006",
+    id: "b2c3d4e5-0015-4000-8000-000000000015",
+    medicament_id: "a1b2c3d4-0006-4000-8000-000000000006",
     espece: "chat",
     tranche_age: "adulte",
     dose_min: 5,
@@ -159,8 +159,8 @@ export const stubPosologies: Posologie[] = [
 
   // Pfizerpène — Chien
   {
-    id: "pos-016",
-    medicament_id: "med-007",
+    id: "b2c3d4e5-0016-4000-8000-000000000016",
+    medicament_id: "a1b2c3d4-0007-4000-8000-000000000007",
     espece: "chien",
     tranche_age: "adulte",
     dose_min: 20000,
@@ -169,8 +169,8 @@ export const stubPosologies: Posologie[] = [
   },
   // Pfizerpène — Chat
   {
-    id: "pos-017",
-    medicament_id: "med-007",
+    id: "b2c3d4e5-0017-4000-8000-000000000017",
+    medicament_id: "a1b2c3d4-0007-4000-8000-000000000007",
     espece: "chat",
     tranche_age: "adulte",
     dose_min: 20000,
@@ -180,8 +180,8 @@ export const stubPosologies: Posologie[] = [
 
   // Metacam oral — Chien (J1 dose d'attaque)
   {
-    id: "pos-018",
-    medicament_id: "med-008",
+    id: "b2c3d4e5-0018-4000-8000-000000000018",
+    medicament_id: "a1b2c3d4-0008-4000-8000-000000000008",
     espece: "chien",
     tranche_age: "adulte",
     dose_min: 0.1,
