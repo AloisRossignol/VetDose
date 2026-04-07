@@ -1,33 +1,23 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Medication, Espece } from "../types";
-
-const ESPECE_LABELS: Record<Espece, string> = {
-  chien: "Chien",
-  chat: "Chat",
-  lapin: "Lapin",
-  furet: "Furet",
-  rongeur: "Rongeur",
-};
+import { Medication } from "../types";
 
 interface Props {
   medication: Medication;
-  especes: Espece[];
   onPress: () => void;
 }
 
-export default function MedicationCard({ medication, especes, onPress }: Props) {
+export default function MedicationCard({ medication, onPress }: Props) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.header}>
-        <Text style={styles.name}>{medication.nom_commercial}</Text>
-        <Text style={styles.famille}>{medication.famille}</Text>
-      </View>
-      <Text style={styles.dci}>{medication.dci}</Text>
-      <View style={styles.tags}>
-        {especes.map((e) => (
-          <View key={e} style={styles.tag}>
-            <Text style={styles.tagText}>{ESPECE_LABELS[e]}</Text>
+      <Text style={styles.name}>{medication.nom}</Text>
+      <View style={styles.footer}>
+        {medication.frequence && (
+          <Text style={styles.frequence}>{medication.frequence}</Text>
+        )}
+        {medication.voies_administration.map((v) => (
+          <View key={v} style={styles.tag}>
+            <Text style={styles.tagText}>{v}</Text>
           </View>
         ))}
       </View>
@@ -48,19 +38,19 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
   name: {
     fontSize: 17,
     fontWeight: "700",
     color: "#1B7A5A",
-    flex: 1,
+    marginBottom: 8,
   },
-  famille: {
+  footer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    alignItems: "center",
+  },
+  frequence: {
     fontSize: 12,
     color: "#888",
     fontWeight: "500",
@@ -69,16 +59,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 8,
     overflow: "hidden",
-  },
-  dci: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 8,
-  },
-  tags: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
   },
   tag: {
     backgroundColor: "#E8F5E9",

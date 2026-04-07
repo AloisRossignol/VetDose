@@ -1,9 +1,10 @@
 import React from "react";
+import { TouchableOpacity, Text } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { RootStackParamList } from "./types";
-import TabNavigator from "./TabNavigator";
+import MedicationListScreen from "../screens/MedicationListScreen";
 import MedicationDetailScreen from "../screens/MedicationDetailScreen";
-import MedicationEditScreen from "../screens/MedicationEditScreen";
+import CalculatorScreen from "../screens/CalculatorScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -17,9 +18,19 @@ export default function RootNavigator() {
       }}
     >
       <Stack.Screen
-        name="Tabs"
-        component={TabNavigator}
-        options={{ headerShown: false }}
+        name="MedicationList"
+        component={MedicationListScreen}
+        options={({ navigation }) => ({
+          title: "VetDose",
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Calculator")}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={{ fontSize: 22 }}>🧮</Text>
+            </TouchableOpacity>
+          ),
+        })}
       />
       <Stack.Screen
         name="MedicationDetail"
@@ -27,13 +38,12 @@ export default function RootNavigator() {
         options={{ title: "Fiche médicament" }}
       />
       <Stack.Screen
-        name="MedicationEdit"
-        component={MedicationEditScreen}
-        options={({ route }) => ({
-          title: route.params?.medicationId
-            ? "Modifier médicament"
-            : "Nouveau médicament",
-        })}
+        name="Calculator"
+        component={CalculatorScreen}
+        options={{
+          title: "Calculatrice",
+          presentation: "modal",
+        }}
       />
     </Stack.Navigator>
   );
