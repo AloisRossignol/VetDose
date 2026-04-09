@@ -17,6 +17,7 @@ import {
 import SpeciesSelector from "../components/SpeciesSelector";
 import ConcentrationBadge from "../components/ConcentrationBadge";
 import { Espece, VoieAdmin, Posologie } from "../types";
+import { COLORS, FONTS, formatFrequence } from "../theme";
 import type { RootStackScreenProps } from "../navigation/types";
 
 const VOIE_LABELS: Record<VoieAdmin, string> = {
@@ -29,6 +30,7 @@ const VOIE_LABELS: Record<VoieAdmin, string> = {
 };
 
 function getPosologieLabel(p: Posologie): string {
+  if (p.tableau_posologie) return p.unite || "Tableau";
   if (p.volume_min !== null) return "Solution (ml/kg)";
   if (p.dose_min !== null) return `Comprimé (${p.unite})`;
   return "Posologie";
@@ -72,7 +74,7 @@ export default function MedicationDetailScreen({
   route,
 }: RootStackScreenProps<"MedicationDetail">) {
   const insets = useSafeAreaInsets();
-  const { medicationId } = route.params;
+  const { medicationId, defaultVoie } = route.params;
   const { data: med, isLoading } = useMedication(medicationId);
   const { data: posologies = [] } = usePosologiesForMedication(medicationId);
   const { data: especes = [] } = useEspecesForMedication(medicationId);
@@ -81,7 +83,7 @@ export default function MedicationDetailScreen({
 
   const [selectedEspece, setSelectedEspece] = useState<Espece | null>(null);
   const [poids, setPoids] = useState("");
-  const [selectedVoie, setSelectedVoie] = useState<VoieAdmin | null>(null);
+  const [selectedVoie, setSelectedVoie] = useState<VoieAdmin | null>(defaultVoie ?? null);
   const [selectedConcentration, setSelectedConcentration] = useState<number | null>(null);
   const [selectedPosologieId, setSelectedPosologieId] = useState<string | null>(null);
 
@@ -119,7 +121,9 @@ export default function MedicationDetailScreen({
 
   useEffect(() => {
     if (filteredPosologies.length > 0) {
-      setSelectedPosologieId(filteredPosologies[0].id);
+      if (!filteredPosologies.some((p) => p.id === selectedPosologieId)) {
+        setSelectedPosologieId(filteredPosologies[0].id);
+      }
     } else {
       setSelectedPosologieId(null);
     }
@@ -168,8 +172,8 @@ export default function MedicationDetailScreen({
       <View style={styles.header}>
         <Text style={styles.title}>{med.nom}</Text>
         <View style={styles.metaRow}>
-          {med.frequence && (
-            <Text style={styles.metaTag}>{med.frequence}</Text>
+          {formatFrequence(med.frequence) && (
+            <Text style={styles.metaTag}>{formatFrequence(med.frequence)}</Text>
           )}
           {med.voies_administration.map((v) => (
             <Text key={v} style={styles.metaTag}>{v}</Text>
@@ -198,7 +202,7 @@ export default function MedicationDetailScreen({
 
         {filteredPosologies.length > 1 && (
           <View style={{ marginBottom: 12 }}>
-            <Text style={styles.label}>Type de formulation</Text>
+            <Text style={styles.label}>Dosage</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
               {filteredPosologies.map((p) => (
                 <TouchableOpacity
@@ -273,14 +277,49 @@ export default function MedicationDetailScreen({
           />
         )}
 
-        {isUnknownDose && selectedPosologie?.note && (
+        {isUnknownDose && selectedPosologie?.tableau_posologie && (
+          <View style={styles.tableau}>
+            <View style={styles.tableauHeader}>
+              {selectedPosologie.tableau_posologie.colonnes.map((col, i) => (
+                <View key={i} style={[{ flex: 1 }, i === 0 && { flex: 0.8 }]}>
+                  <Text style={styles.tableauHeaderCell}>{col}</Text>
+                  {i === selectedPosologie.tableau_posologie!.colonnes.length - 1 && selectedPosologie.tableau_posologie!.legende && (
+                    <Text style={styles.tableauLegende}>{selectedPosologie.tableau_posologie!.legende}</Text>
+                  )}
+                </View>
+              ))}
+            </View>
+            {selectedPosologie.tableau_posologie.lignes.map((ligne, i) => {
+              const lignes = selectedPosologie.tableau_posologie!.lignes;
+              const highlighted = poidsValid && poidsNum >= ligne.w && (
+                ligne.w_max !== undefined
+                  ? poidsNum <= ligne.w_max
+                  : i === lignes.length - 1 || poidsNum < lignes[i + 1].w
+              );
+              return (
+                <View
+                  key={i}
+                  style={[styles.tableauRow, i % 2 === 1 && styles.tableauRowAlt, highlighted && styles.tableauRowHighlight]}
+                >
+                  {ligne.v.map((cell, j) => (
+                    <Text key={j} style={[styles.tableauCell, j === 0 && { flex: 0.8 }, highlighted && styles.tableauCellHighlight]}>
+                      {cell}
+                    </Text>
+                  ))}
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {isUnknownDose && !selectedPosologie?.tableau_posologie && selectedPosologie?.note && (
           <View style={styles.result}>
             <Text style={styles.resultLabel}>Protocole</Text>
             <Text style={styles.resultValue}>{selectedPosologie.note}</Text>
           </View>
         )}
 
-        {isUnknownDose && !selectedPosologie?.note && (
+        {isUnknownDose && !selectedPosologie?.tableau_posologie && !selectedPosologie?.note && (
           <View style={styles.warning}>
             <Text style={styles.warningText}>
               Le dosage de ce médicament ne peut pas être calculé automatiquement.
@@ -312,105 +351,191 @@ export default function MedicationDetailScreen({
             )}
           </View>
         )}
+
+        {selectedPosologie?.note && !isUnknownDose && (
+          <View style={styles.noteBox}>
+            <Text style={styles.noteText}>{selectedPosologie.note}</Text>
+          </View>
+        )}
+
+        {result && selectedPosologie?.duree_perfusion_min && result.unite === "ml" && (
+          <View style={[styles.noteBox, { marginTop: 8 }]}>
+            <Text style={styles.noteText}>
+              {"Débit (perfusion " + selectedPosologie.duree_perfusion_min + " min) : "}
+              <Text style={{ fontFamily: FONTS.semiBold }}>
+                {result.min === result.max
+                  ? (Math.round((result.min! / selectedPosologie.duree_perfusion_min) * 60 * 10) / 10) + " mL/h"
+                  : (Math.round((result.min! / selectedPosologie.duree_perfusion_min) * 60 * 10) / 10) +
+                    " – " +
+                    (Math.round((result.max! / selectedPosologie.duree_perfusion_min) * 60 * 10) / 10) +
+                    " mL/h"}
+              </Text>
+            </Text>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F5F5F5" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: COLORS.background },
   header: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   title: {
     fontSize: 22,
-    fontWeight: "800",
-    color: "#1B7A5A",
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
     marginBottom: 8,
   },
-  metaRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  metaRow: { flexDirection: "row", gap: 6, flexWrap: "wrap", alignItems: "flex-start" },
   metaTag: {
-    fontSize: 12,
-    color: "#555",
-    backgroundColor: "#f0f0f0",
+    fontSize: 11,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
     overflow: "hidden",
   },
   section: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
     padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#333",
+    fontSize: 15,
+    fontFamily: FONTS.bold,
+    color: COLORS.text,
     marginBottom: 16,
   },
   inputGroup: { marginBottom: 12 },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
+    fontSize: 13,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textSecondary,
+    marginBottom: 5,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
   input: {
-    backgroundColor: "#f9f9f9",
+    backgroundColor: COLORS.background,
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
+    borderColor: COLORS.border,
+    borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
     fontSize: 16,
+    fontFamily: FONTS.regular,
+    color: COLORS.text,
   },
-  errorText: { color: "#D32F2F", fontSize: 12, marginTop: 4 },
+  errorText: { color: COLORS.error, fontSize: 12, marginTop: 4, fontFamily: FONTS.regular },
+  tableau: {
+    marginTop: 16,
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  tableauHeader: {
+    flexDirection: "row",
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  tableauHeaderCell: {
+    color: "#fff",
+    fontFamily: FONTS.bold,
+    fontSize: 13,
+  },
+  tableauLegende: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 10,
+    fontFamily: FONTS.regular,
+    marginTop: 2,
+  },
+  tableauRow: {
+    flexDirection: "row",
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    backgroundColor: COLORS.card,
+  },
+  tableauRowAlt: { backgroundColor: COLORS.background },
+  tableauRowHighlight: { backgroundColor: COLORS.primaryLight },
+  tableauCell: { flex: 1, fontSize: 13, fontFamily: FONTS.regular, color: COLORS.text },
+  tableauCellHighlight: { fontFamily: FONTS.bold, color: COLORS.primary },
   warning: {
-    backgroundColor: "#FFF8E1",
-    borderRadius: 8,
+    backgroundColor: COLORS.warning,
+    borderRadius: 10,
     padding: 12,
     marginBottom: 12,
   },
-  warningText: { color: "#F57F17", fontWeight: "600", fontSize: 13 },
+  warningText: { color: COLORS.warningText, fontFamily: FONTS.semiBold, fontSize: 13 },
   badge: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: COLORS.background,
     borderWidth: 1.5,
-    borderColor: "#ddd",
+    borderColor: COLORS.border,
   },
   badgeActive: {
-    backgroundColor: "#1B7A5A",
-    borderColor: "#1B7A5A",
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
-  badgeText: { fontSize: 13, color: "#555" },
-  badgeTextActive: { color: "#fff" },
+  badgeText: { fontSize: 13, fontFamily: FONTS.regular, color: COLORS.textSecondary },
+  badgeTextActive: { color: "#fff", fontFamily: FONTS.semiBold },
   result: {
     marginTop: 16,
-    backgroundColor: "#E8F5E9",
-    borderRadius: 10,
-    padding: 16,
+    backgroundColor: COLORS.primaryLight,
+    borderRadius: 14,
+    padding: 20,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   resultLabel: {
-    fontSize: 13,
-    color: "#555",
+    fontSize: 12,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textSecondary,
     marginBottom: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   resultValue: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#1B7A5A",
+    fontSize: 32,
+    fontFamily: FONTS.extraBold,
+    color: COLORS.primary,
   },
   resultSub: {
     fontSize: 12,
-    color: "#777",
-    marginTop: 6,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginTop: 8,
+    textAlign: "center",
+  },
+  noteBox: {
+    marginTop: 12,
+    backgroundColor: "#FFF8E1",
+    borderRadius: 10,
+    padding: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.warningText,
+  },
+  noteText: {
+    fontSize: 13,
+    fontFamily: FONTS.regular,
+    color: "#5D4037",
+    lineHeight: 19,
   },
 });

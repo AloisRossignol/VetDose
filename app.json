@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1B7A5A"
+      "backgroundColor": "#0A5C38"
     },
     "ios": {
       "supportsTablet": true,
@@ -22,13 +22,15 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png",
-        "backgroundColor": "#1B7A5A"
+        "backgroundColor": "#0A5C38"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.vetdose.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

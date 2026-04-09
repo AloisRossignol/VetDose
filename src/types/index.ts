@@ -8,6 +8,7 @@ export interface Medication {
   concentrations: number[]; // mg/ml
   frequence: string | null;
   voies_administration: VoieAdmin[];
+  alias_de: string | null;  // UUID du médicament principal si c'est un alias
   created_at: string;
   updated_at: string;
 }
@@ -23,12 +24,14 @@ export interface Posologie {
   dose_max: number | null;
   unite: string;
   note: string | null;
+  duree_perfusion_min: number | null;
+  tableau_posologie: { colonnes: string[]; legende?: string; lignes: { w: number; w_max?: number; v: string[] }[] } | null;
   created_at: string;
 }
 
 
 export type RootStackParamList = {
   MedicationList: undefined;
-  MedicationDetail: { medicationId: string };
+  MedicationDetail: { medicationId: string; defaultVoie?: VoieAdmin };
   Calculator: undefined;
 };

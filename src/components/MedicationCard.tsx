@@ -1,6 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Medication } from "../types";
+import { COLORS, FONTS, formatFrequence } from "../theme";
 
 interface Props {
   medication: Medication;
@@ -9,17 +11,32 @@ interface Props {
 
 export default function MedicationCard({ medication, onPress }: Props) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
-      <Text style={styles.name}>{medication.nom}</Text>
-      <View style={styles.footer}>
-        {medication.frequence && (
-          <Text style={styles.frequence}>{medication.frequence}</Text>
-        )}
-        {medication.voies_administration.map((v) => (
-          <View key={v} style={styles.tag}>
-            <Text style={styles.tagText}>{v}</Text>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
+      <View style={styles.row}>
+        <View style={styles.icon}>
+          <MaterialCommunityIcons name="pill" size={18} color={COLORS.primary} />
+        </View>
+        <View style={styles.body}>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{medication.nom}</Text>
+            {medication.alias_de && (
+              <View style={styles.aliasBadge}>
+                <Text style={styles.aliasText}>alias</Text>
+              </View>
+            )}
           </View>
-        ))}
+          <View style={styles.footer}>
+            {formatFrequence(medication.frequence) && (
+              <Text style={styles.frequence}>{formatFrequence(medication.frequence)}</Text>
+            )}
+            {medication.voies_administration.map((v) => (
+              <View key={v} style={styles.tag}>
+                <Text style={styles.tagText}>{v}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+        <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.border} />
       </View>
     </TouchableOpacity>
   );
@@ -27,48 +44,85 @@ export default function MedicationCard({ medication, onPress }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: COLORS.card,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     marginHorizontal: 16,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    marginBottom: 8,
+    shadowColor: "#0A5C38",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  icon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: COLORS.primaryLight,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  body: {
+    flex: 1,
+    gap: 5,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
   },
   name: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#1B7A5A",
-    marginBottom: 8,
+    fontSize: 15,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.text,
+  },
+  aliasBadge: {
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  aliasText: {
+    fontSize: 10,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
   },
   footer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
+    gap: 5,
     alignItems: "center",
   },
   frequence: {
-    fontSize: 12,
-    color: "#888",
-    fontWeight: "500",
-    backgroundColor: "#f0f0f0",
-    paddingHorizontal: 8,
+    fontSize: 11,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 6,
     overflow: "hidden",
   },
   tag: {
-    backgroundColor: "#E8F5E9",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    backgroundColor: "#F0F4F2",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
     borderRadius: 6,
   },
   tagText: {
-    fontSize: 12,
-    color: "#2E7D32",
-    fontWeight: "500",
+    fontSize: 11,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
   },
 });
