@@ -18,6 +18,15 @@ export default function ConcentrationBadge({
 }: Props) {
   if (values.length === 0) return null;
 
+  if (values.length === 1) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.singleValue}>{values[0]} {unit}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
@@ -70,5 +79,10 @@ const styles = StyleSheet.create({
   },
   badgeTextActive: {
     color: "#fff",
+  },
+  singleValue: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#333",
   },
 });

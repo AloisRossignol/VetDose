@@ -2,7 +2,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 export type RootStackParamList = {
   MedicationList: undefined;
-  MedicationDetail: { medicationId: string };
+  MedicationDetail: { medicationId: string; defaultVoie?: import("../types").VoieAdmin };
   Calculator: undefined;
 };
 

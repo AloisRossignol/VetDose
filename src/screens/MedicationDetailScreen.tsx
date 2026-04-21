@@ -85,7 +85,7 @@ export default function MedicationDetailScreen({
   const [poids, setPoids] = useState("");
   const [selectedVoie, setSelectedVoie] = useState<VoieAdmin | null>(defaultVoie ?? null);
   const [selectedConcentration, setSelectedConcentration] = useState<number | null>(null);
-  const [selectedPosologieId, setSelectedPosologieId] = useState<string | null>(null);
+  const [selectedDosageLabel, setSelectedDosageLabel] = useState<string | null>(null);
 
   useEffect(() => {
     if (med && !selectedVoie && med.voies_administration.length > 0) {
@@ -99,38 +99,95 @@ export default function MedicationDetailScreen({
     }
   }, [med]);
 
-  const filteredPosologies = useMemo(() => {
+  // Posologies pour l'espèce sélectionnée + posologies null-espece non conflictuelles
+  const posologiesByEspece = useMemo(() => {
     if (!posologies.length) return [];
+    if (!hasSpecies) return posologies;
 
-    let pool = posologies;
-
-    // Filtre par voie d'administration
-    if (selectedVoie) {
-      const byVoie = pool.filter((p) => p.voie_admin === selectedVoie || p.voie_admin === null);
-      if (byVoie.length > 0) pool = byVoie;
+    const nullPool = posologies.filter((p) => p.espece === null);
+    if (!selectedEspece) {
+      // Sans espèce sélectionnée : null-espece + représentants espèce-spécifiques (dédupliqués par label)
+      const nullLabels = new Set(nullPool.map((p) => getPosologieLabel(p)));
+      const speciesRepresentatives = posologies.filter(
+        (p) => p.espece !== null && !nullLabels.has(getPosologieLabel(p))
+      );
+      return [...speciesRepresentatives, ...nullPool];
     }
 
-    // Filtre par espèce
-    if (!hasSpecies) return pool;
-    if (selectedEspece) {
-      const specific = pool.filter((p) => p.espece === selectedEspece);
-      if (specific.length > 0) return specific;
-    }
-    return pool.filter((p) => p.espece === null);
-  }, [posologies, selectedEspece, hasSpecies, selectedVoie]);
+    const speciesPool = posologies.filter((p) => p.espece === selectedEspece);
+    if (speciesPool.length === 0) return nullPool;
+
+    // Ajouter les posologies null-espece dont le label n'existe pas dans les posologies espèce
+    const speciesLabels = new Set(speciesPool.map((p) => getPosologieLabel(p)));
+    const additionalNull = nullPool.filter((p) => !speciesLabels.has(getPosologieLabel(p)));
+    return [...speciesPool, ...additionalNull];
+  }, [posologies, selectedEspece, hasSpecies]);
+
+  // Dédupliquer par label pour le sélecteur de dosage, comprimés/PO en premier
+  const dosageTypes = useMemo(() => {
+    const seen = new Set<string>();
+    const types = posologiesByEspece.filter((p) => {
+      const label = getPosologieLabel(p);
+      if (seen.has(label)) return false;
+      seen.add(label);
+      return true;
+    });
+    return types.sort((a, b) => {
+      const aIsOral = a.voie_admin === "PO" || a.tableau_posologie !== null;
+      const bIsOral = b.voie_admin === "PO" || b.tableau_posologie !== null;
+      return aIsOral === bIsOral ? 0 : aIsOral ? -1 : 1;
+    });
+  }, [posologiesByEspece]);
 
   useEffect(() => {
-    if (filteredPosologies.length > 0) {
-      if (!filteredPosologies.some((p) => p.id === selectedPosologieId)) {
-        setSelectedPosologieId(filteredPosologies[0].id);
+    if (dosageTypes.length > 0) {
+      if (!dosageTypes.some((p) => getPosologieLabel(p) === selectedDosageLabel)) {
+        setSelectedDosageLabel(getPosologieLabel(dosageTypes[0]));
       }
     } else {
-      setSelectedPosologieId(null);
+      setSelectedDosageLabel(null);
     }
-  }, [filteredPosologies]);
+  }, [dosageTypes]);
 
-  const selectedPosologie =
-    filteredPosologies.find((p) => p.id === selectedPosologieId) ?? null;
+  const selectedDosageType = dosageTypes.find((p) => getPosologieLabel(p) === selectedDosageLabel) ?? null;
+
+  // Voies disponibles pour le type de dosage sélectionné
+  const availableVoies = useMemo(() => {
+    if (!med || !selectedDosageType) return med?.voies_administration ?? [];
+    const label = getPosologieLabel(selectedDosageType);
+    const group = posologiesByEspece.filter((p) => getPosologieLabel(p) === label);
+    const groupVoies = group.map((p) => p.voie_admin).filter((v): v is VoieAdmin => v !== null);
+    if (groupVoies.length > 0) {
+      return med.voies_administration.filter((v) => groupVoies.includes(v));
+    }
+    // Groupe sans voie_admin explicite : exclure les voies des autres groupes
+    const otherExclusiveVoies = new Set(
+      posologiesByEspece
+        .filter((p) => getPosologieLabel(p) !== label && p.voie_admin !== null)
+        .map((p) => p.voie_admin as VoieAdmin)
+    );
+    return med.voies_administration.filter((v) => !otherExclusiveVoies.has(v));
+  }, [selectedDosageType, posologiesByEspece, med]);
+
+  // Auto-ajuster la voie si elle devient incompatible
+  useEffect(() => {
+    if (availableVoies.length > 0 && selectedVoie && !availableVoies.includes(selectedVoie)) {
+      setSelectedVoie(availableVoies[0]);
+    }
+  }, [availableVoies]);
+
+  // Posologie active pour le calcul : dans le groupe, prendre celle qui correspond à la voie
+  const selectedPosologie = useMemo(() => {
+    if (!selectedDosageType) return null;
+    const label = getPosologieLabel(selectedDosageType);
+    const group = posologiesByEspece.filter((p) => getPosologieLabel(p) === label);
+    if (group.length === 1) return group[0];
+    return (
+      group.find((p) => p.voie_admin === selectedVoie) ??
+      group.find((p) => p.voie_admin === null) ??
+      group[0]
+    );
+  }, [selectedDosageType, posologiesByEspece, selectedVoie]);
 
   const poidsNum = parseFloat(poids.replace(",", "."));
   const poidsValid = !isNaN(poidsNum) && poidsNum >= 0.01 && poidsNum <= 150;
@@ -143,12 +200,13 @@ export default function MedicationDetailScreen({
 
   const result = useMemo(() => {
     if (!selectedPosologie || !poidsValid) return null;
+    if (hasSpecies && !selectedEspece) return null;
     return calculateResult(
       selectedPosologie,
       poidsNum,
       needsConcentration ? selectedConcentration : null
     );
-  }, [selectedPosologie, poidsNum, selectedConcentration, needsConcentration]);
+  }, [selectedPosologie, poidsNum, selectedConcentration, needsConcentration, hasSpecies, selectedEspece]);
 
   if (isLoading || !med) {
     return (
@@ -158,11 +216,12 @@ export default function MedicationDetailScreen({
     );
   }
 
-  const noPosologie = hasSpecies && selectedEspece && filteredPosologies.length === 0;
+  const noPosologie = hasSpecies && selectedEspece && posologiesByEspece.length === 0;
   const isUnknownDose =
     selectedPosologie &&
     selectedPosologie.volume_min === null &&
     selectedPosologie.dose_min === null;
+  const isApprox = selectedPosologie?.note?.startsWith("+/-") ?? false;
 
   return (
     <ScrollView
@@ -200,23 +259,31 @@ export default function MedicationDetailScreen({
           </View>
         )}
 
-        {filteredPosologies.length > 1 && (
+        {hasSpecies && !selectedEspece && poidsValid && (
+          <View style={styles.warning}>
+            <Text style={styles.warningText}>
+              Veuillez sélectionner une espèce pour obtenir le résultat.
+            </Text>
+          </View>
+        )}
+
+        {dosageTypes.length > 1 && (
           <View style={{ marginBottom: 12 }}>
             <Text style={styles.label}>Dosage</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
-              {filteredPosologies.map((p) => (
+              {dosageTypes.map((p) => (
                 <TouchableOpacity
                   key={p.id}
-                  onPress={() => setSelectedPosologieId(p.id)}
+                  onPress={() => setSelectedDosageLabel(getPosologieLabel(p))}
                   style={[
                     styles.badge,
-                    selectedPosologieId === p.id && styles.badgeActive,
+                    getPosologieLabel(p) === selectedDosageLabel && styles.badgeActive,
                   ]}
                 >
                   <Text
                     style={[
                       styles.badgeText,
-                      selectedPosologieId === p.id && styles.badgeTextActive,
+                      getPosologieLabel(p) === selectedDosageLabel && styles.badgeTextActive,
                     ]}
                   >
                     {getPosologieLabel(p)}
@@ -245,7 +312,7 @@ export default function MedicationDetailScreen({
         <View style={{ marginBottom: 12 }}>
           <Text style={styles.label}>Voie d'administration</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
-            {med.voies_administration.map((v) => (
+            {availableVoies.map((v) => (
               <TouchableOpacity
                 key={v}
                 onPress={() => setSelectedVoie(v)}
@@ -312,28 +379,12 @@ export default function MedicationDetailScreen({
           </View>
         )}
 
-        {isUnknownDose && !selectedPosologie?.tableau_posologie && selectedPosologie?.note && (
-          <View style={styles.result}>
-            <Text style={styles.resultLabel}>Protocole</Text>
-            <Text style={styles.resultValue}>{selectedPosologie.note}</Text>
-          </View>
-        )}
-
-        {isUnknownDose && !selectedPosologie?.tableau_posologie && !selectedPosologie?.note && (
-          <View style={styles.warning}>
-            <Text style={styles.warningText}>
-              Le dosage de ce médicament ne peut pas être calculé automatiquement.
-              Référez-vous au protocole de la clinique.
-            </Text>
-          </View>
-        )}
-
         {result && (
           <View style={styles.result}>
             <Text style={styles.resultLabel}>{result.label}</Text>
             {result.min === result.max ? (
               <Text style={styles.resultValue}>
-                {result.min} {result.unite}
+                {isApprox ? "+/- " : ""}{result.min} {result.unite}
               </Text>
             ) : (
               <Text style={styles.resultValue}>
@@ -352,7 +403,7 @@ export default function MedicationDetailScreen({
           </View>
         )}
 
-        {selectedPosologie?.note && !isUnknownDose && (
+        {selectedPosologie?.note && (
           <View style={styles.noteBox}>
             <Text style={styles.noteText}>{selectedPosologie.note}</Text>
           </View>
